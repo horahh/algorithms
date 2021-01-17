@@ -5,22 +5,52 @@
 ///  * `elements` - The vector containing the elements to order.
 ///  * `start` - The index of the start of container segment
 ///  * `end` - The index of the end of container segment
-fn _get_pivot<T: Ord>(elements: &mut Vec<T>, start: usize, end: usize) -> usize {
+fn _get_pivot<T: Ord>(elements: &mut Vec<T>, start: usize, end: usize) -> usize
+where
+    T: std::fmt::Debug,
+{
     let mut pivot_index = start;
-    for lower_element_index in start + 1..end + 1 {
-        if elements[pivot_index] > elements[lower_element_index] {
-            elements.swap(pivot_index, lower_element_index);
-            // swap the number that is less than the pivot with the number greater than pivot
-            if pivot_index + 1 < lower_element_index {
-                elements.swap(pivot_index + 1, lower_element_index)
+    let mut last_greater_index = end + 1;
+    'lower_loop: for lower_index in start + 1..end + 1 {
+        // avoid extra loops when knowing the right part has greater numbers
+        if lower_index == last_greater_index {
+            break;
+        }
+        if elements[lower_index] > elements[pivot_index] {
+            for greater_index in (lower_index + 1..last_greater_index).rev() {
+                if elements[greater_index] < elements[pivot_index] {
+                    println!(" swap: pivot_value {:?} pivot_index {} lower_value {:?} lower_index{} greater_value {:?} greater_index {} " , elements[pivot_index] , pivot_index, elements[lower_index]  , lower_index, elements[greater_index] , greater_index);
+                    elements.swap(lower_index, greater_index);
+                    println!(" {:?}", elements);
+                    last_greater_index = greater_index;
+                    continue 'lower_loop;
+                }
             }
-            // advance pivot once everything is coherent
-            pivot_index += 1;
+            // Reaching this means the greater and lower indexes are ordered
+            // Then swap pivot with the greatest lower index to have the right partitions
+            println!(
+                " swap: pivot_value {:?} pivot_index {} lower_value {:?} lower_index {} ",
+                elements[pivot_index],
+                pivot_index,
+                elements[lower_index - 1],
+                lower_index - 1
+            );
+            println!(" {:?}", elements);
+            elements.swap(pivot_index, lower_index - 1);
+            pivot_index = lower_index - 1;
+            return pivot_index;
         }
     }
+    // when not exiting inside the loop means all the elements are lower than pivot
+    elements.swap(pivot_index, last_greater_index - 1);
+    println!(" after3 {:?}", elements);
+    pivot_index = end;
     pivot_index
 }
-pub fn _qsort<T: Ord>(elements: &mut Vec<T>, begin: usize, end: usize) {
+pub fn _qsort<T: Ord>(elements: &mut Vec<T>, begin: usize, end: usize)
+where
+    T: std::fmt::Debug,
+{
     // three or more segment
     let pivot_index = _get_pivot(elements, begin, end);
     // qsort the rigth of the pivot
@@ -32,11 +62,15 @@ pub fn _qsort<T: Ord>(elements: &mut Vec<T>, begin: usize, end: usize) {
         _qsort(elements, begin, pivot_index - 1);
     }
 }
-pub fn qsort<T: Ord>(elements: &mut Vec<T>) {
+pub fn qsort<T: Ord>(elements: &mut Vec<T>)
+where
+    T: std::fmt::Debug,
+{
     if elements.len() <= 1 {
         return;
     }
     let len: usize = elements.len();
+    println!(" {:?}", elements);
     _qsort(elements, 0, len - 1);
 }
 
