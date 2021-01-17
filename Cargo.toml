@@ -1,5 +1,5 @@
 [package]
-name = "qsort"
+name = "algorithms"
 version = "0.1.0"
 authors = ["Horacio Hidalgo <horacio.hidalgo@gmail.com>"]
 edition = "2018"
