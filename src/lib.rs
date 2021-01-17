@@ -1,3 +1,9 @@
+//! Crate for an educative an clean example of the quicksort algorithm
+//!
+//! Avoided use of casting and using debug on generic types for clarity.
+//! To show the output when running the tests simply execute:
+//! cargo test -- --nocapture
+
 /// Brief.
 /// return the index to the pivot.
 /// Description
@@ -62,6 +68,9 @@ where
         _qsort(elements, begin, pivot_index - 1);
     }
 }
+
+/// Implementation of quicksort algorithm
+/// * `elements` - A vector of any size containing a generic type that can be ordered.
 pub fn qsort<T: Ord>(elements: &mut Vec<T>)
 where
     T: std::fmt::Debug,
