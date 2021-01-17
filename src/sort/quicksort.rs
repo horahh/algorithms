@@ -11,7 +11,7 @@
 ///  * `elements` - The vector containing the elements to order.
 ///  * `start` - The index of the start of container segment
 ///  * `end` - The index of the end of container segment
-fn _get_pivot<T: Ord>(elements: &mut Vec<T>, start: usize, end: usize) -> usize
+fn _get_pivot<T: Ord >(elements: &mut Vec<T>, start: usize, end: usize) -> usize
 where
     T: std::fmt::Debug,
 {
@@ -70,7 +70,7 @@ where
 }
 
 /// Implementation of quicksort algorithm
-/// * `elements` - A vector of any size containing a generic type that can be ordered.
+/// * `elements` - A vector containing a generic type that can be ordered.
 pub fn qsort<T: Ord>(elements: &mut Vec<T>)
 where
     T: std::fmt::Debug,
