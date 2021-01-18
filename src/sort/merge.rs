@@ -57,9 +57,11 @@ where
     let mut insert_index = low_index;
     loop {
         while elements[low_index] <= elements[high_index] {
+            println!("test low index {} high index {}", low_index, high_index);
             if circular_buffer_size == 0 {
                 return;
             }
+            println!("circular buffer size: {}", circular_buffer_size);
             println!("swap low index {} insert index {}", low_index, insert_index);
             println!("before  {:?} ", elements);
             elements.swap(low_index, insert_index);
@@ -99,10 +101,14 @@ fn _merge<T: Ord>(elements: &mut Vec<T>, low: usize, high: usize)
 where
     T: std::fmt::Debug,
 {
-    let half = low + (high - low) / 2;
+    let half = low + (high - low + 1) / 2;
     if half != low {
-        _merge(elements, low, half - 1);
-        _merge(elements, half, high);
+        println!("{:?} ", elements);
+        println!(" merge:: low {:?} high {:?}", low, half);
+        _merge(elements, low, half );
+        println!(" merge:: low {:?} high {:?}", half+1, high);
+        _merge(elements, half+1, high);
+        println!("merge2::");
         _merge2(elements, low, half, high);
     }
 }
@@ -115,8 +121,8 @@ where
     if half == 0 {
         return;
     }
-    _merge(elements, 0, half - 1);
-    _merge(elements, half, elements.len() - 1);
+    _merge(elements, 0, half );
+    _merge(elements, half+1, elements.len() - 1);
 }
 
 #[cfg(test)]
@@ -160,6 +166,7 @@ mod tests {
     #[test]
     fn merge_many_unordered() {
         let mut res: Vec<i32> = vec![0, 4, 67, 6, 7, 0, 1, 2, 3];
+        // let mut res: Vec<i32> = vec![67, 7, 6, 4, 3, 2, 1, 0, 0];
         merge(&mut res);
         assert_eq!(res, vec![0, 0, 1, 2, 3, 4, 6, 7, 67]);
     }
