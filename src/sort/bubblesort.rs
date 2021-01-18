@@ -1,12 +1,13 @@
-pub fn bubblesort<T: Ord>(elements: &mut Vec<T>) 
-where T: std::fmt::Debug,
+pub fn bubblesort<T: Ord>(elements: &mut Vec<T>)
+where
+    T: std::fmt::Debug,
 {
     if elements.len() == 0 {
-        return
+        return;
     }
-    for min_index in 0..elements.len()-1 {
+    for min_index in 0..elements.len() - 1 {
         let mut swap_index = min_index;
-        for compare_index in min_index+1..elements.len() {
+        for compare_index in min_index + 1..elements.len() {
             if elements[swap_index] > elements[compare_index] {
                 swap_index = compare_index;
             }
@@ -14,7 +15,6 @@ where T: std::fmt::Debug,
         elements.swap(min_index, swap_index);
     }
 }
-
 
 #[cfg(test)]
 mod tests {

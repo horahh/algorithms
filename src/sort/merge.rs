@@ -1,42 +1,59 @@
-fn _get_next(low_index: usize, insert_index: usize, circular_buffer_size: usize, buffer_partition: usize) -> usize {
-    let mut offset ;
+fn _get_next(
+    low_index: usize,
+    insert_index: usize,
+    circular_buffer_size: usize,
+    buffer_partition: usize,
+) -> usize {
+    let mut offset;
     if low_index == insert_index {
         return low_index + 1;
     } else {
         println!("low {} insert {}/n", low_index, insert_index);
-        offset =  ( low_index + 1 - insert_index ) % circular_buffer_size;
+        offset = (low_index + 1 - insert_index) % circular_buffer_size;
     }
 
     // this is the complex case where the buffer has three segments
-    if low_index > buffer_partition  && insert_index < buffer_partition  { //  not necessary to check for condition 2 && offset < (low_index - insert_index)
-        let nested_buffer_size = buffer_partition-low_index;
+    if low_index > buffer_partition && insert_index < buffer_partition {
+        //  not necessary to check for condition 2 && offset < (low_index - insert_index)
+        let nested_buffer_size = buffer_partition - low_index;
         if offset > nested_buffer_size {
             // subtract the size of the nested buffer
-            offset-= nested_buffer_size;
-        }
-        else {
+            offset -= nested_buffer_size;
+        } else {
             // move offset to the nester buffer region
             offset += buffer_partition - insert_index;
         }
-    } 
+    }
     return low_index + offset;
 }
 
-fn _rotate_circular_buffer<T:Ord>(elements: &mut Vec<T>, mut low_index: usize, mut insert_index: usize, mut circular_buffer_size: usize, buffer_partition: usize) {
-    while  circular_buffer_size != 0 {
+fn _rotate_circular_buffer<T: Ord>(
+    elements: &mut Vec<T>,
+    mut low_index: usize,
+    mut insert_index: usize,
+    mut circular_buffer_size: usize,
+    buffer_partition: usize,
+) {
+    while circular_buffer_size != 0 {
         elements.swap(low_index, insert_index);
-        low_index = _get_next(low_index, insert_index, circular_buffer_size, buffer_partition); // this should just add 1?
-        circular_buffer_size -=1;
-        insert_index +=1;
+        low_index = _get_next(
+            low_index,
+            insert_index,
+            circular_buffer_size,
+            buffer_partition,
+        ); // this should just add 1?
+        circular_buffer_size -= 1;
+        insert_index += 1;
     }
 }
 
-fn _merge2<T:Ord>(elements: &mut Vec<T>, low: usize, half: usize, high: usize) 
-where T: std::fmt::Debug,
+fn _merge2<T: Ord>(elements: &mut Vec<T>, low: usize, half: usize, high: usize)
+where
+    T: std::fmt::Debug,
 {
     let mut low_index = low;
     let mut high_index = half;
-    let mut circular_buffer_size = half - low ;
+    let mut circular_buffer_size = half - low;
     let mut insert_index = low_index;
     loop {
         while elements[low_index] <= elements[high_index] {
@@ -44,51 +61,62 @@ where T: std::fmt::Debug,
                 return;
             }
             println!("swap low index {} insert index {}", low_index, insert_index);
-            println!("before  {:?} " , elements);
-            elements.swap(low_index,insert_index); 
-            println!("after   {:?} " , elements);
+            println!("before  {:?} ", elements);
+            elements.swap(low_index, insert_index);
+            println!("after   {:?} ", elements);
             low_index = _get_next(low_index, insert_index, circular_buffer_size, half);
-            circular_buffer_size -=1;
-            insert_index+=1;
+            circular_buffer_size -= 1;
+            insert_index += 1;
         }
-        if circular_buffer_size ==0 {
+        if circular_buffer_size == 0 {
             return;
         }
-        println!("swap insert index {} high index {}", insert_index, high_index);
-        println!("before  {:?} " , elements);
+        println!(
+            "swap insert index {} high index {}",
+            insert_index, high_index
+        );
+        println!("before  {:?} ", elements);
         elements.swap(insert_index, high_index);
-        println!("after   {:?} " , elements);
+        println!("after   {:?} ", elements);
         if low_index != insert_index {
-            low_index=high_index;
+            low_index = high_index;
         }
-        insert_index +=1;
-        high_index +=1;
+        insert_index += 1;
+        high_index += 1;
         if high_index == high {
-            _rotate_circular_buffer(elements,low_index, insert_index, circular_buffer_size, half);
+            _rotate_circular_buffer(
+                elements,
+                low_index,
+                insert_index,
+                circular_buffer_size,
+                half,
+            );
             return;
         }
     }
 }
-fn _merge<T:Ord>(elements: &mut Vec<T>, low: usize, high: usize) 
-where T: std::fmt::Debug,
+fn _merge<T: Ord>(elements: &mut Vec<T>, low: usize, high: usize)
+where
+    T: std::fmt::Debug,
 {
     let half = low + (high - low) / 2;
     if half != low {
-        _merge(elements, low, half -1);
+        _merge(elements, low, half - 1);
         _merge(elements, half, high);
         _merge2(elements, low, half, high);
     }
 }
 
-pub fn merge<T:Ord>(elements: &mut Vec<T>) 
-where T: std::fmt::Debug,
+pub fn merge<T: Ord>(elements: &mut Vec<T>)
+where
+    T: std::fmt::Debug,
 {
-    let half= elements.len()/2;
+    let half = elements.len() / 2;
     if half == 0 {
         return;
     }
-    _merge(elements, 0,half-1);
-    _merge(elements, half,elements.len()-1);
+    _merge(elements, 0, half - 1);
+    _merge(elements, half, elements.len() - 1);
 }
 
 #[cfg(test)]

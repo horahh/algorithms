@@ -11,7 +11,7 @@
 ///  * `elements` - The vector containing the elements to order.
 ///  * `start` - The index of the start of container segment
 ///  * `end` - The index of the end of container segment
-fn _get_pivot<T: Ord >(elements: &mut Vec<T>, start: usize, end: usize) -> usize
+fn _get_pivot<T: Ord>(elements: &mut Vec<T>, start: usize, end: usize) -> usize
 where
     T: std::fmt::Debug,
 {
