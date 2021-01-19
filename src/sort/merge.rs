@@ -170,4 +170,11 @@ mod tests {
         merge(&mut res);
         assert_eq!(res, vec![0, 0, 1, 2, 3, 4, 6, 7, 67]);
     }
+    #[test]
+    fn merge_many_unordered2() {
+        let mut res: Vec<i32> = vec![0, 4, 67, 6, 7, 0, 1, 2, 3, 67, 7, 6, 4, 3, 2, 1, 0, 0];
+        // let mut res: Vec<i32> = vec![67, 7, 6, 4, 3, 2, 1, 0, 0];
+        merge(&mut res);
+        assert_eq!(res, vec![0, 0, 0,0,1,1, 2,2, 3,3, 4,4, 6,6, 7,7, 67,67]);
+    }
 }
