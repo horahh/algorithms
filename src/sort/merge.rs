@@ -1,58 +1,100 @@
-fn _get_next(
-    low_index: usize,
-    insert_index: usize,
-    circular_buffer_size: usize,
-    buffer_partition: usize,
-) -> usize {
-    if low_index == insert_index {
-        println!("first case low {} insert {}", low_index+1, insert_index);
-        return low_index + 1;
-    } 
-    // this case swap the next min with the current min
-    if low_index == insert_index + circular_buffer_size - 1 {
-        println!("second case low {} insert {}", low_index, insert_index);
-        return low_index;
-    }
-    if low_index+1 - insert_index < circular_buffer_size {
-        println!("third case low {} insert {}", low_index+1, insert_index);
-        return low_index + 1 ;
-    }
-    // this is the complex case where the buffer has three segments
-    if insert_index < buffer_partition {
-        println!("4th case low {} insert {}", buffer_partition, insert_index);
-        return buffer_partition;
-    }
-    println!("error");
-    //println!(
-    return  insert_index+1;
+use std::collections::VecDeque;
+
+/* Merge  Example  for 2 arrays
+12345 223789
+1 2345 223789
+12 345 223789
+122 45 3 23789
+1222 5 34 3789
+12223 54 3789
+122233 45 789
+1222334 5 789
+12223345 789
+122233457 89
+1222334578 9
+12223345789
+
+00000 123456789   011234
+00000 123456789   00011234
+00000000 456789 123   11234     queue 1   
+000000001 56789 4 23   11234     queue 2 4
+00000000111 789 4 23 56  234    queue 2 4 5
+000000001112 89 4 7 3 56  234    queue 3 4 5 7
+
+*/
+
+pub struct side_metadata {
+    pub mut index: usize,
+    pub mut size: usize,
 }
 
-fn _rotate_circular_buffer<T: Ord>(
-    elements: &mut Vec<T>,
-    mut low_index: usize,
-    mut insert_index: usize,
-    mut circular_buffer_size: usize,
-    buffer_partition: usize,
-)
-where
+impl side_metadata {
+    fn new(input_index: usize, input_size: usize) -> side_metadata {
+        side_metadata {
+            index : input_index,
+            size : input_size,
+        }
+    }
+}
+
+pub struct merge_metadata{
+    pub mut q: VecDeque<usize>,
+    pub mut left: side_metadata,
+    pub mut right: side_metadata,
+}
+
+impl merge_metadata{
+    fn new( left_index: usize, right_index: usize, total_size: usize)
+    {
+        merge_metadata{
+            q: VecDeque::new(),
+            left: side_metadata::new(left_index, right_index - left_index),
+            right: side_metadata::new(right_index, total_size - right_index - left_index),
+        }
+    }
+    fn take_left<T>(self: &mut merge_metadata , elements: &mut Vec<T>) {
+        if self.q.is_empty() {
+            self.left.index+=1;
+            self.left.size -=1;
+            return;
+        }
+
+        let swap_index = self.q.pop_back().unwrap();
+        elements.swap(swap_index, self.left.index);
+        self.q.push_back(self.left.index);
+        self.left.index+=1;
+        self.left.size -=1;
+    }
+    fn take_right(self: &mut merge_metadata ) {
+        elements.swap(self.right.index, self.left.index);
+        self.q.push_back(self.right.index);
+        self.left.index+=1;
+        self.right.index+=1;
+        self.right.size -=1;
+    }
+}
+
+fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
+    where
     T: std::fmt::Debug,
 {
-    if insert_index == low_index {
-        return;
+    while meta.left.size != 0 && meta.right.size != 0  && elements[meta.left.index] <= elements[meta.right.index] {
+        meta.take_left();
     }
-    println!("buffer size: {}", circular_buffer_size);
-    while circular_buffer_size != 0 {
-    println!("buffer size: {}", circular_buffer_size);
-        elements.swap(low_index, insert_index);
-        low_index = _get_next(
-            low_index,
-            insert_index,
-            circular_buffer_size,
-            buffer_partition,
-        ); // this should just add 1?
-        circular_buffer_size -= 1;
-        insert_index += 1;
-        println!("{:?}", elements);
+    while meta.right.size == 0 && meta.left.size != 0 {
+        meta.take_left();
+    }
+}
+
+fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
+    where
+    T: std::fmt::Debug,
+{
+    while meta.left.size != 0 && meta.right.size != 0  && elements[meta.left.index] > elements[meta.right.index] {
+        meta.take_right();
+    }
+    while meta.left.size == 0 && meta.right.size !=0 {
+        meta.take_right();
     }
 }
 
@@ -60,60 +102,13 @@ fn _merge2<T: Ord>(elements: &mut Vec<T>, low: usize, mut half: usize, high: usi
 where
     T: std::fmt::Debug,
 {
-    let mut low_index = low;
-    let mut high_index = half;
-    let mut circular_buffer_size = half - low;
-    let mut insert_index = low_index;
-    loop {
-        println!("circular buffer size {} low index {} high index {}", circular_buffer_size, low_index, high_index);
-        while circular_buffer_size != 0 && elements[low_index] <= elements[high_index] {
-            println!("test low index {} high index {}", low_index, high_index);
-            println!("circular buffer size: {}", circular_buffer_size);
-            println!("swap low index {} insert index {}", low_index, insert_index);
-            println!("before1  {:?} ", elements);
-            elements.swap(low_index, insert_index);
-            println!("after1   {:?} ", elements);
-            low_index = _get_next(low_index, insert_index, circular_buffer_size, half);
-            println!("low :: {}", low_index);
-            circular_buffer_size -= 1;
-            insert_index += 1;
-            if insert_index == half - 1 {
-                half = low_index;
-            }
-        }
-        if circular_buffer_size == 0 {
-            return;
-        }
-        println!(
-            "swap insert index {} high index {}",
-            insert_index, high_index
-        );
-        println!("before2  {:?} ", elements);
-        elements.swap(insert_index, high_index);
-        println!("after2   {:?} ", elements);
-        // move low to the swappped value index which was the high
-        if low_index == insert_index  {
-            low_index = high_index;
-        }
-        insert_index += 1;
-        if insert_index == half -1 {
-            half = low_index;
-        }
-        high_index += 1;
-        println!("high index : {} high {} " , high_index, high);
-        if high_index > high {
-            _rotate_circular_buffer(
-                elements,
-                low_index,
-                insert_index,
-                circular_buffer_size,
-                half,
-            );
-            println!("\n\nEXIT\n");
-            return;
-        }
+    let metadata = merge_metadata::new(low, half, elements.len());
+    while meta.left.size != 0 && meta.right.size != 0 {
+         _get_left_elements();
+         _get_right_elements();
     }
 }
+
 fn _merge<T: Ord>(elements: &mut Vec<T>, low: usize, high: usize)
 where
     T: std::fmt::Debug,
@@ -189,6 +184,7 @@ mod tests {
         merge(&mut res);
         assert_eq!(res, vec![0, 0, 1, 2, 3, 4, 6, 7, 67]);
     }
+    /*
     #[test]
     fn merge_many_unordered2() {
         let mut res: Vec<i32> = vec![0, 4, 67, 6, 7, 0, 1, 2, 3, 67, 7, 6, 4, 3, 2, 1, 0, 0];
@@ -202,5 +198,13 @@ mod tests {
         // let mut res: Vec<i32> = vec![67, 7, 6, 4, 3, 2, 1, 0, 0];
         merge(&mut res);
         assert_eq!(res, vec![0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]);
+    }
+    */
+    #[test]
+    fn merge_many_unordered4() {
+        let mut res: Vec<i32> = vec![6,7,8,0,1,1,1,2,2,2,0,0,0,0,0,1,1,1,2,2,2,0,1,1,1,2,2,2,0,0,0,0,0,1,1,1,2,2,2,5,5];
+        // let mut res: Vec<i32> = vec![67, 7, 6, 4, 3, 2, 1, 0, 0];
+        merge(&mut res);
+        assert_eq!(res, vec![0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,5,5,6,7,8]);
     }
 }
