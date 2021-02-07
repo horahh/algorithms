@@ -24,8 +24,8 @@ use std::collections::VecDeque;
 */
 
 pub struct side_metadata {
-    pub mut index: usize,
-    pub mut size: usize,
+    pub index: usize,
+    pub size: usize,
 }
 
 impl side_metadata {
@@ -38,13 +38,13 @@ impl side_metadata {
 }
 
 pub struct merge_metadata{
-    pub mut q: VecDeque<usize>,
-    pub mut left: side_metadata,
-    pub mut right: side_metadata,
+    pub q: VecDeque<usize>,
+    pub left: side_metadata,
+    pub right: side_metadata,
 }
 
 impl merge_metadata{
-    fn new( left_index: usize, right_index: usize, total_size: usize)
+    fn new( left_index: usize, right_index: usize, total_size: usize) -> merge_metadata
     {
         merge_metadata{
             q: VecDeque::new(),
@@ -65,7 +65,7 @@ impl merge_metadata{
         self.left.index+=1;
         self.left.size -=1;
     }
-    fn take_right(self: &mut merge_metadata ) {
+    fn take_right<T>(self: &mut merge_metadata , elements: &mut Vec<T>) {
         elements.swap(self.right.index, self.left.index);
         self.q.push_back(self.right.index);
         self.left.index+=1;
@@ -79,10 +79,10 @@ fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
     T: std::fmt::Debug,
 {
     while meta.left.size != 0 && meta.right.size != 0  && elements[meta.left.index] <= elements[meta.right.index] {
-        meta.take_left();
+        meta.take_left(elements);
     }
     while meta.right.size == 0 && meta.left.size != 0 {
-        meta.take_left();
+        meta.take_left(elements);
     }
 }
 
@@ -91,10 +91,10 @@ fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
     T: std::fmt::Debug,
 {
     while meta.left.size != 0 && meta.right.size != 0  && elements[meta.left.index] > elements[meta.right.index] {
-        meta.take_right();
+        meta.take_right(elements);
     }
     while meta.left.size == 0 && meta.right.size !=0 {
-        meta.take_right();
+        meta.take_right(elements);
     }
 }
 
@@ -102,10 +102,10 @@ fn _merge2<T: Ord>(elements: &mut Vec<T>, low: usize, mut half: usize, high: usi
 where
     T: std::fmt::Debug,
 {
-    let metadata = merge_metadata::new(low, half, elements.len());
+    let mut meta = merge_metadata::new(low, half, elements.len());
     while meta.left.size != 0 && meta.right.size != 0 {
-         _get_left_elements();
-         _get_right_elements();
+         _get_left_elements(elements, &mut meta);
+         _get_right_elements(elements, &mut meta);
     }
 }
 
@@ -199,7 +199,6 @@ mod tests {
         merge(&mut res);
         assert_eq!(res, vec![0, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]);
     }
-    */
     #[test]
     fn merge_many_unordered4() {
         let mut res: Vec<i32> = vec![6,7,8,0,1,1,1,2,2,2,0,0,0,0,0,1,1,1,2,2,2,0,1,1,1,2,2,2,0,0,0,0,0,1,1,1,2,2,2,5,5];
@@ -207,4 +206,5 @@ mod tests {
         merge(&mut res);
         assert_eq!(res, vec![0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,5,5,6,7,8]);
     }
+    */
 }
