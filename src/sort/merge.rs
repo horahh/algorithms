@@ -23,36 +23,36 @@ use std::collections::VecDeque;
 
 */
 
-pub struct side_metadata {
+pub struct SideMetadata {
     pub index: usize,
     pub size: usize,
 }
 
-impl side_metadata {
-    fn new(input_index: usize, input_size: usize) -> side_metadata {
-        side_metadata {
+impl SideMetadata {
+    fn new(input_index: usize, input_size: usize) -> SideMetadata {
+        SideMetadata {
             index : input_index,
             size : input_size,
         }
     }
 }
 
-pub struct merge_metadata{
+pub struct MergeMetadata{
     pub q: VecDeque<usize>,
-    pub left: side_metadata,
-    pub right: side_metadata,
+    pub left: SideMetadata,
+    pub right: SideMetadata,
 }
 
-impl merge_metadata{
-    fn new( left_index: usize, right_index: usize, total_size: usize) -> merge_metadata
+impl MergeMetadata{
+    fn new( left_index: usize, right_index: usize, total_size: usize) -> MergeMetadata
     {
-        merge_metadata{
+        MergeMetadata{
             q: VecDeque::new(),
-            left: side_metadata::new(left_index, right_index - left_index),
-            right: side_metadata::new(right_index, total_size - right_index - left_index),
+            left: SideMetadata::new(left_index, right_index - left_index),
+            right: SideMetadata::new(right_index, total_size - (right_index - left_index)),
         }
     }
-    fn take_left<T>(self: &mut merge_metadata , elements: &mut Vec<T>) {
+    fn take_left<T>(self: &mut MergeMetadata , elements: &mut Vec<T>) {
         if self.q.is_empty() {
             self.left.index+=1;
             self.left.size -=1;
@@ -65,7 +65,7 @@ impl merge_metadata{
         self.left.index+=1;
         self.left.size -=1;
     }
-    fn take_right<T>(self: &mut merge_metadata , elements: &mut Vec<T>) {
+    fn take_right<T>(self: &mut MergeMetadata , elements: &mut Vec<T>) {
         elements.swap(self.right.index, self.left.index);
         self.q.push_back(self.right.index);
         self.left.index+=1;
@@ -74,7 +74,7 @@ impl merge_metadata{
     }
 }
 
-fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
+fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata)
     where
     T: std::fmt::Debug,
 {
@@ -86,7 +86,7 @@ fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
     }
 }
 
-fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
+fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata)
     where
     T: std::fmt::Debug,
 {
@@ -98,11 +98,11 @@ fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut merge_metadata)
     }
 }
 
-fn _merge2<T: Ord>(elements: &mut Vec<T>, low: usize, mut half: usize, high: usize)
+fn _merge2<T: Ord>(elements: &mut Vec<T>, low: usize, half: usize, high: usize)
 where
     T: std::fmt::Debug,
 {
-    let mut meta = merge_metadata::new(low, half, elements.len());
+    let mut meta = MergeMetadata::new(low, half, high-low+1);
     while meta.left.size != 0 && meta.right.size != 0 {
          _get_left_elements(elements, &mut meta);
          _get_right_elements(elements, &mut meta);
