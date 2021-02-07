@@ -39,8 +39,10 @@ impl SideMetadata {
 
 pub struct MergeMetadata{
     pub q: VecDeque<usize>,
+    pub qwrap_index : usize,
     pub left: SideMetadata,
     pub right: SideMetadata,
+    pub insert_index: usize,
 }
 
 impl MergeMetadata{
@@ -48,29 +50,71 @@ impl MergeMetadata{
     {
         MergeMetadata{
             q: VecDeque::new(),
+            qwrap_index: 0,
             left: SideMetadata::new(left_index, right_index - left_index),
             right: SideMetadata::new(right_index, total_size - (right_index - left_index)),
+            insert_index : left_index,
         }
     }
-    fn take_left<T>(self: &mut MergeMetadata , elements: &mut Vec<T>) {
+    fn take_left<T>(self: &mut MergeMetadata , elements: &mut Vec<T>) 
+        where T: std::fmt::Debug,
+    {
         if self.q.is_empty() {
             self.left.index+=1;
             self.left.size -=1;
+            self.insert_index +=1;
             return;
         }
 
-        let swap_index = self.q.pop_back().unwrap();
-        elements.swap(swap_index, self.left.index);
-        self.q.push_back(self.left.index);
-        self.left.index+=1;
+        elements.swap(self.insert_index, self.left.index);
+        self.q.pop_front();
         self.left.size -=1;
+        self.insert_index += 1;
+
+        if !self.q.is_empty() && self.q.len() == self.left.size {
+            if self.qwrap_index > 0 {  // what if 0?
+                self.qwrap_index -= 1;
+            }
+            self.q[self.qwrap_index] = self.left.index;
+        }
+        else
+        {
+            self.q.push_back(self.left.index);
+        }
+        self.left.index = self.q[0];
+
+        println!("left index: {}", self.left.index);
+        println!("insert index {}", self.insert_index);
+        println!("{:?} {:?} ", elements, self.q);
     }
-    fn take_right<T>(self: &mut MergeMetadata , elements: &mut Vec<T>) {
-        elements.swap(self.right.index, self.left.index);
-        self.q.push_back(self.right.index);
-        self.left.index+=1;
+    fn take_right<T>(self: &mut MergeMetadata , elements: &mut Vec<T>) 
+        where T: std::fmt::Debug,
+    {
+        elements.swap(self.right.index, self.insert_index);
+        if !self.q.is_empty() && self.q.len() == self.left.size  {
+            println!("{:?}", self.qwrap_index);
+            self.q[self.qwrap_index] = self.right.index;
+            self.qwrap_index = (self.qwrap_index + 1) % self.left.size;
+            self.left.index=self.q[0]; 
+        }
+        else  {
+            if self.left.size != 0 {
+                self.q.push_back(self.right.index);
+            }
+        }
+
+        if self.q.is_empty() {
+            self.left.index +=1;
+        }
+        else
+        {
+            self.left.index = self.q[0];
+        }
+
         self.right.index+=1;
         self.right.size -=1;
+        self.insert_index+=1;
+        println!("{:?} {:?} ", elements, self.q);
     }
 }
 
@@ -78,7 +122,7 @@ fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata)
     where
     T: std::fmt::Debug,
 {
-    while meta.left.size != 0 && meta.right.size != 0  && elements[meta.left.index] <= elements[meta.right.index] {
+    while meta.left.size != 0 && meta.right.size != 0  && elements[meta.left.index] <= elements[meta.right.index] { 
         meta.take_left(elements);
     }
     while meta.right.size == 0 && meta.left.size != 0 {
@@ -124,7 +168,9 @@ where
         println!("merge2::start low: {} half {} high {}", low, half, high);
         _merge2(elements, low, half, high);
         println!("{:?}", elements);
-    println!("merge2::finish");
+        println!("merge2::start low: {} half {} high {}", low, half, high);
+        println!("merge2::finish");
+        println!("");
     }
 }
 
