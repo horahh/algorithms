@@ -29,7 +29,7 @@ pub struct SideMetadata {
 }
 
 impl SideMetadata {
-    fn new<T>(input_index: usize, input_size: usize, elements: Vec<T> ) -> SideMetadata {
+    fn new<T>(input_index: usize, input_size: usize, _elements: &mut Vec<T> ) -> SideMetadata {
         SideMetadata {
             index : input_index,
             size : input_size,
@@ -37,25 +37,26 @@ impl SideMetadata {
     }
 }
 
-pub struct MergeMetadata<T>{
+pub struct MergeMetadata<T: Copy>{
     pub q: VecDeque<T>,
     pub left: SideMetadata,
     pub right: SideMetadata,
     pub insert_index: usize,
 }
 
-impl MergeMetadata<T>{
-    fn new( left_index: usize, right_index: usize, total_size: usize, elements: Vec<T>) -> MergeMetadata
+impl<T> MergeMetadata<T>
+    where T: std::fmt::Debug + Copy,
+{
+    fn new( left_index: usize, right_index: usize, total_size: usize, elements: &mut Vec<T>) -> MergeMetadata<T>
     {
-        MergeMetadata{
-            q: VecDeque::new(),
+        MergeMetadata::<T>{
+            q: VecDeque::<T>::new(),
             left: SideMetadata::new(left_index, right_index - left_index, elements),
             right: SideMetadata::new(right_index, total_size - (right_index - left_index), elements),
             insert_index : left_index,
         }
     }
-    fn insert_left(self: &mut MergeMetadata , elements: &mut Vec<T>) 
-        where T: std::fmt::Debug,
+    fn insert_left(self: &mut MergeMetadata<T> , elements: &mut Vec<T>) 
     {
         if self.q.is_empty() {
             self.left.index+=1;
@@ -65,7 +66,7 @@ impl MergeMetadata<T>{
         }
         //elements.swap(self.insert_index, self.left.index);
         self.q.push_back(elements[self.insert_index]);
-        elements[self.insert_index] = self.q.pop_front()?;
+        elements[self.insert_index] = self.q.pop_front().unwrap();
         self.left.size -=1;
         self.insert_index += 1;
 
@@ -73,16 +74,16 @@ impl MergeMetadata<T>{
         println!("insert index {}", self.insert_index);
         println!("{:?} {:?} ", elements, self.q);
     }
-    fn insert_right(self: &mut MergeMetadata , elements: &mut Vec<T>) 
-        where T: std::fmt::Debug,
+    fn insert_right(self: &mut MergeMetadata<T> , elements: &mut Vec<T>) 
     {
-        self.q.push_back(self.get_right_value(elements));
+        let right_value = self.get_right_value(elements);
+        self.q.push_back(right_value);
         self.right.index +=1;
         self.right.size -=1;
         self.insert_index +=1;
         println!("{:?} {:?} ", elements, self.q);
     }
-    fn get_left_value(self: &mut MergeMetadata, elements: &mut Vec<T>) -> T
+    fn get_left_value(self: &mut MergeMetadata<T>, elements: &mut Vec<T>) -> T
     {
         if !self.q.is_empty() {
             elements[self.insert_index]
@@ -92,15 +93,15 @@ impl MergeMetadata<T>{
             self.q[0]
         }
     }
-    fn get_right_value(self: &mut MergeMetadata, elements: &mut Vec<T>) -> T
+    fn get_right_value(self: &mut MergeMetadata<T>, elements: &mut Vec<T>) -> T
     {
         elements[self.right.index]
     }
 }
 
-fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata)
+fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata<T>)
     where
-    T: std::fmt::Debug,
+    T: std::fmt::Debug + Copy,
 {
     while meta.left.size != 0 && meta.right.size != 0  && meta.get_left_value(elements) <= meta.get_right_value(elements) { 
         meta.insert_left(elements);
@@ -110,9 +111,9 @@ fn _get_left_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata)
     }
 }
 
-fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata)
+fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata<T>)
     where
-    T: std::fmt::Debug,
+    T: std::fmt::Debug + Copy,
 {
     while meta.left.size != 0 && meta.right.size != 0  && meta.get_left_value(elements) > meta.get_right_value(elements) {
         meta.insert_right(elements);
@@ -124,9 +125,9 @@ fn _get_right_elements<T: Ord>(elements: &mut Vec<T>, meta: &mut MergeMetadata)
 
 fn _merge2<T: Ord>(elements: &mut Vec<T>, low: usize, half: usize, high: usize)
 where
-    T: std::fmt::Debug,
+    T: std::fmt::Debug + Copy,
 {
-    let mut meta = MergeMetadata::new(low, half, high-low+1);
+    let mut meta = MergeMetadata::new(low, half, high-low+1, elements);
     while meta.left.size != 0 || meta.right.size != 0 {
          _get_left_elements(elements, &mut meta);
          _get_right_elements(elements, &mut meta);
@@ -135,7 +136,7 @@ where
 
 fn _merge<T: Ord>(elements: &mut Vec<T>, low: usize, high: usize)
 where
-    T: std::fmt::Debug,
+    T: std::fmt::Debug + Copy,
 {
     let half = low + (high - low + 1) / 2;
     println!("low {} high {}", low, high);
@@ -174,7 +175,7 @@ where
 
 pub fn merge<T: Ord>(elements: &mut Vec<T>)
 where
-    T: std::fmt::Debug,
+    T: std::fmt::Debug + Copy,
 {
     let half = elements.len() / 2;
     if half == 0 {
