@@ -58,15 +58,11 @@ impl<T> MergeMetadata<T>
     }
     fn insert_left(self: &mut MergeMetadata<T> , elements: &mut Vec<T>) 
     {
-        if self.q.is_empty() {
-            self.left.index+=1;
-            self.left.size -=1;
-            self.insert_index +=1;
-            return;
+        if !self.q.is_empty() {
+            //elements.swap(self.insert_index, self.left.index);
+            self.q.push_back(elements[self.insert_index]);
+            elements[self.insert_index] = self.q.pop_front().unwrap();
         }
-        //elements.swap(self.insert_index, self.left.index);
-        self.q.push_back(elements[self.insert_index]);
-        elements[self.insert_index] = self.q.pop_front().unwrap();
         self.left.size -=1;
         self.insert_index += 1;
 
@@ -76,8 +72,9 @@ impl<T> MergeMetadata<T>
     }
     fn insert_right(self: &mut MergeMetadata<T> , elements: &mut Vec<T>) 
     {
-        let right_value = self.get_right_value(elements);
-        self.q.push_back(right_value);
+        let insert_value = elements[self.insert_index];
+        self.q.push_back(insert_value);
+        elements[self.insert_index] = self.get_right_value(elements);;
         self.right.index +=1;
         self.right.size -=1;
         self.insert_index +=1;
@@ -85,7 +82,7 @@ impl<T> MergeMetadata<T>
     }
     fn get_left_value(self: &mut MergeMetadata<T>, elements: &mut Vec<T>) -> T
     {
-        if !self.q.is_empty() {
+        if self.q.is_empty() {
             elements[self.insert_index]
         }
         else
